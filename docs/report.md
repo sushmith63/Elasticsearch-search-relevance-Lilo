@@ -197,14 +197,31 @@ This implementation uses a single-node Elasticsearch setup and query-time scorin
 
 ## Use of Orders Data
 
-The provided `orders.json` dataset represents behavioral and transactional signals such as product purchases.  
-For this exercise, I did not directly integrate orders data into the search ranking pipeline, as the core tasks focused on catalog-level relevance, index design, query behavior, and personalization logic.
+The provided `orders.json` dataset represents transactional purchase data.
 
-In a production system, orders data would be highly valuable for:
-- Deriving popularity and conversion-based ranking signals
-- Training learning-to-rank (LTR) models
-- Personalizing results based on historical purchasing behavior
-- Applying recency-weighted demand boosts
+In this implementation, orders data was **used indirectly** to derive
+catalog-level ranking signals such as:
 
-However, integrating orders data meaningfully requires clear aggregation strategies (time windows, normalization across categories, sparsity handling), which were outside the scope of this assignment. For clarity and correctness, I scoped this implementation to text relevance and persona-based ranking while outlining orders-based ranking as a natural next step.
+- Product popularity
+- Price-per-unit (PPU) for bulk purchasing comparisons
+
+These derived signals were computed offline during ingestion and stored
+directly on product documents. They were then used for persona-based
+ranking and relevance tuning.
+
+Raw orders data (e.g., per-user history, recency-weighted demand, or
+session-based personalization) was intentionally not queried at search
+time, as the scope of this exercise focused on catalog relevance, index
+design, and deterministic ranking strategies.
+
+In a production system, orders data would additionally be leveraged for:
+- Learning-to-rank (LTR) training
+- Personalized recommendations
+- Recency-aware demand boosts
+- User-specific re-ranking
+
+This approach mirrors common production patterns where behavioral data
+is transformed into stable ranking features rather than queried
+directly in real time.
+
 
