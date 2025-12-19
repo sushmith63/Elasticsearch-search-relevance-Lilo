@@ -1,0 +1,131 @@
+# Lilo Elasticsearch – Search & Relevance Notes
+
+## 1) Setup & Data Ingestion
+
+- Elasticsearch running locally on Ubuntu VM (single node).
+- Created index `products_v1` using a custom mapping + analyzer (lowercasing + synonym filter).
+- Indexed 10,000 products via `src/index_products.py` (bulk indexing).
+- Verified ingestion:
+  - `GET products_v1/_count` returned `10000`.
+
+---
+
+## 2) Baseline Search Queries (Q1–Q5)
+
+I started with a baseline `multi_match` query across:
+- `title` (highest weight)
+- `description`
+- `category.text`
+
+This produced valid results but showed noisy relevance due to the dataset containing cross-contaminated tokens (e.g., “tomato color”, “hp”, “bulk pack”, “PVC” appearing across unrelated categories).
+
+### Example baseline issue
+For query **Q1: “3 hp sewage pump weir”**, top matches included categories such as:
+- Makeup / Cosmetics
+- Gloves
+- Lubricants
+
+This suggests the text fields contain overlapping keywords and synonyms that are not aligned to true intent.
+
+---
+
+## 3) Relevance Improvement – Technical Query Guardrails (Fix 1)
+
+### Attempt 1 (too strict)
+I first tried a strict technical template using:
+- `operator: "and"` (all terms must match)
+- exclusion filters for unrelated categories (Makeup/Cosmetics)
+
+Result: **0 hits** for Q1/Q2/Q3 (over-filtering due to noisy/partial text fields).
+
+### Fix 1 v2
+I relaxed the strict query by:
+- using `operator: "or"`
+- applying `minimum_should_match` to require partial term overlap
+- boosting title matches
+- keeping category exclusions (Makeup/Cosmetics) as a guardrail
+
+This improved results substantially while still preventing obvious intent mismatch.
+
+**Observed results after Fix 1 v2:**
+- Q1 strict v2 total hits: **435**
+- Q2 strict v2 total hits: **195**
+- Q3 strict v2 total hits: **4772**
+- Top results no longer included Makeup/Cosmetics categories for technical queries.
+
+---
+
+## 4) Intent-Aware Category Boosting for “Tomato” Queries (Fix 2)
+
+Because “tomato” can represent multiple intents (Food vs Makeup shade names), I used `function_score` to boost expected category prefixes:
+
+- For **Q4: “tomato”**, boosted `Food*` and downweighted `Tools*`.
+- For **Q5: “tomato makeup”**, boosted `Makeup*` and downweighted `Tools*` / `Industrial*`.
+
+This approach demonstrates intent-aware ranking without requiring ML models.
+
+---
+
+## 5) Persona-Based Ranking (Task 4)
+
+I implemented two personas for the same query (**“nitrile gloves bulk pack”**):
+
+### Persona A: Heavy Buyer
+Goal: prefer popular, reputable, available products.
+
+Signals:
+- `popularity` (sqrt factor)
+- `supplier_rating`
+- `inventory_status == in_stock`
+
+### Persona B: Budget Buyer
+Goal: prefer cheaper unit pricing while maintaining basic quality.
+
+Signals:
+- `price_per_unit` using reciprocal scoring (lower price → higher score)
+- `supplier_rating`
+- Added `exists(price_per_unit)` filter to ensure pricing-based scoring is meaningful
+
+### observation
+Due to noisy catalog data and cross-domain categories, purely “cheapest” scoring can surface irrelevant items (e.g., food categories with extremely low `price_per_unit`) unless persona scoring is applied within strong intent constraints (category filtering or learned intent classification).
+
+In a production system, I would:
+- detect intent first (category prediction / query classification),
+- then apply persona scoring only within that intent domain.
+
+---
+
+## 6) Improvements
+
+I would prioritize:
+
+1. **Query intent classification**
+   - lightweight rules initially (keyword triggers),
+   - upgrade to learned classifier using click logs.
+
+2. **Better category normalization**
+   - standardize category taxonomy (typos like “Grinderz”, inconsistent paths, etc.).
+   - consider mapping to canonical categories and searching on normalized fields.
+
+3. **Field cleanup**
+   - reduce impact of noisy descriptions with separate analyzed fields (e.g., `description_clean`).
+   - index structured fields (hp, diameter, units) separately for precision filters.
+
+4. **Synonyms management**
+   - use curated synonyms per-category instead of global synonyms (to avoid cross-domain drift).
+
+5. **Learning-to-rank / vector reranking**
+   - once click/purchase feedback exists, consider LTR or hybrid vector+BM25 reranking.
+
+---
+
+## 7) Files Produced
+
+- Query JSON files in: `queries/`
+- Result outputs in: `results/`
+- Technical guardrail queries:
+  - `template_technical_v2.json`
+  - `q1_*_strict_v2.json`, `q2_*_strict_v2.json`, `q3_*_strict_v2.json`
+- Persona queries:
+  - `persona_heavy_buyer_v2.json`
+  - `persona_budget_buyer_v2.json`

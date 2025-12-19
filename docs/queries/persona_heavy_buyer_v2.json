@@ -1,0 +1,46 @@
+{
+  "query": {
+    "function_score": {
+      "query": {
+        "bool": {
+          "must": [
+            {
+              "multi_match": {
+                "query": "nitrile gloves bulk pack",
+                "fields": ["title^6", "description^2", "category.text^2"],
+                "fuzziness": "AUTO"
+              }
+            }
+          ],
+          "must_not": [
+            { "prefix": { "category": "Makeup" } },
+            { "prefix": { "category": "Cosmetics" } }
+          ]
+        }
+      },
+      "functions": [
+        {
+          "field_value_factor": {
+            "field": "popularity",
+            "modifier": "sqrt",
+            "factor": 1.3,
+            "missing": 1
+          }
+        },
+        {
+          "field_value_factor": {
+            "field": "supplier_rating",
+            "modifier": "sqrt",
+            "factor": 1.1,
+            "missing": 1
+          }
+        },
+        { "filter": { "term": { "inventory_status": "in_stock" } }, "weight": 2.5 },
+        { "filter": { "term": { "is_legacy": true } }, "weight": 0.2 }
+      ],
+      "score_mode": "sum",
+      "boost_mode": "multiply"
+    }
+  },
+  "size": 10
+}

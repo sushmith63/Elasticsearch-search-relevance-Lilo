@@ -1,0 +1,26 @@
+{
+  "query": {
+    "bool": {
+      "must": [
+        {
+          "multi_match": {
+            "query": "3 hp sewage pump weir",
+            "type": "best_fields",
+            "fields": ["title^10", "description^2", "category.text^1"],
+            "operator": "or",
+            "minimum_should_match": "2<75%",
+            "fuzziness": "AUTO"
+          }
+        }
+      ],
+      "must_not": [
+        { "prefix": { "category": "Makeup" } },
+        { "prefix": { "category": "Cosmetics" } }
+      ],
+      "should": [
+        { "match": { "title": { "query": "3 hp sewage pump weir", "boost": 3 } } }
+      ]
+    }
+  },
+  "size": 10
+}

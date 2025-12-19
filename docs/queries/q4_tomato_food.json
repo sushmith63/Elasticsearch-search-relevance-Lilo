@@ -1,0 +1,20 @@
+{
+  "query": {
+    "function_score": {
+      "query": {
+        "multi_match": {
+          "query": "tomato",
+          "fields": ["title^4", "description^2", "category.text^4"],
+          "fuzziness": "AUTO"
+        }
+      },
+      "functions": [
+        { "filter": { "wildcard": { "category": "Food*" } }, "weight": 4.0 },
+        { "filter": { "wildcard": { "category": "Makeup*" } }, "weight": 1.2 }
+      ],
+      "score_mode": "sum",
+      "boost_mode": "multiply"
+    }
+  },
+  "size": 10
+}

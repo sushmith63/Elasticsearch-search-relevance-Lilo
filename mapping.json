@@ -1,0 +1,102 @@
+{
+  "settings": {
+    "number_of_shards": 1,
+    "number_of_replicas": 0,
+    "analysis": {
+      "filter": {
+        "lilo_synonyms": {
+          "type": "synonym",
+          "synonyms": [
+            "colour, color",
+            "moulding, molding",
+            "litre, liter",
+            "hp, horsepower",
+            "oem, aftermarket",
+            "bulk pack, bulk-pack",
+            "lubricant, oil",
+            "pipe, tubing",
+            "wrench, spanner",
+            "grinder, sander",
+            "glove, handwear",
+            "mask, respirator",
+            "pvc, polyvinyl chloride",
+            "compressor, blower",
+            "gallon, gal",
+            "liters, lt",
+            "pcs, pieces",
+            "kilogram, kg",
+            "tomato colour, tomato color",
+            "industrial, heavy-duty",
+            "fastener, bolt",
+            "sealant, adhesive",
+            "cleaner, detergent",
+            "chemical, compound"
+          ]
+        }
+      },
+      "analyzer": {
+        "lilo_text": {
+          "tokenizer": "standard",
+          "filter": [
+            "lowercase",
+            "lilo_synonyms"
+          ]
+        }
+      },
+      "normalizer": {
+        "lowercase_normalizer": {
+          "type": "custom",
+          "filter": ["lowercase"]
+        }
+      }
+    }
+  },
+  "mappings": {
+    "dynamic": false,
+    "properties": {
+      "product_id": { "type": "keyword" },
+      "sku": { "type": "keyword" },
+      "vendor": { "type": "keyword", "normalizer": "lowercase_normalizer" },
+
+      "title": {
+        "type": "text",
+        "analyzer": "lilo_text",
+        "fields": {
+          "raw": { "type": "keyword", "ignore_above": 256 }
+        }
+      },
+
+      "description": {
+        "type": "text",
+        "analyzer": "lilo_text"
+      },
+
+      "category": {
+        "type": "keyword",
+        "normalizer": "lowercase_normalizer",
+        "fields": {
+          "text": { "type": "text", "analyzer": "lilo_text" }
+        }
+      },
+
+      "unit_of_measure": {
+        "type": "keyword",
+        "normalizer": "lowercase_normalizer"
+      },
+
+      "region_availability": { "type": "keyword" },
+      "supplier_rating": { "type": "float" },
+      "inventory_status": { "type": "keyword" },
+      "bulk_pack_size": { "type": "keyword" },
+
+      "price_per_unit": { "type": "float" },
+      "popularity": { "type": "integer" },
+      "is_legacy": { "type": "boolean" },
+
+      "attributes": {
+        "type": "object",
+        "dynamic": true
+      }
+    }
+  }
+}

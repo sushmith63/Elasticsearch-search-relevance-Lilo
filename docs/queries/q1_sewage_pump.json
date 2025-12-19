@@ -1,0 +1,10 @@
+{
+  "query": {
+    "multi_match": {
+      "query": "3 hp sewage pump weir",
+      "fields": ["title^4", "description^2", "category.text^2"],
+      "fuzziness": "AUTO"
+    }
+  },
+  "size": 10
+}

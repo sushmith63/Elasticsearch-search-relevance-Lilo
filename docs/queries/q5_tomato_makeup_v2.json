@@ -1,0 +1,21 @@
+{
+  "query": {
+    "function_score": {
+      "query": {
+        "multi_match": {
+          "query": "tomato makeup",
+          "fields": ["title^4", "description^2", "category.text^6"],
+          "fuzziness": "AUTO"
+        }
+      },
+      "functions": [
+        { "filter": { "prefix": { "category": "Makeup" } }, "weight": 5.0 },
+        { "filter": { "prefix": { "category": "Industrial" } }, "weight": 0.4 },
+        { "filter": { "prefix": { "category": "Tools" } }, "weight": 0.4 }
+      ],
+      "score_mode": "sum",
+      "boost_mode": "multiply"
+    }
+  },
+  "size": 10
+}

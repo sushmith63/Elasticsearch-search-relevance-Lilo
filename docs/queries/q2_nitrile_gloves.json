@@ -1,0 +1,10 @@
+{
+  "query": {
+    "multi_match": {
+      "query": "nitrile glove bulk pack",
+      "fields": ["title^5", "description^2", "category.text^2"],
+      "fuzziness": "AUTO"
+    }
+  },
+  "size": 10
+}
