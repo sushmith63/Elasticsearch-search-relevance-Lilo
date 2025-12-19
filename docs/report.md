@@ -130,9 +130,9 @@ I would prioritize:
   - `persona_heavy_buyer_v2.json`
   - `persona_budget_buyer_v2.json`
 
-## 8) Risks, Trade-offs, and Limitations
+## 8) Limitations
 
-This solution intentionally focuses on relevance reasoning rather than full production hardening. The following risks and trade-offs were identified:
+This solution intentionally focuses on relevance reasoning rather than full production hardening. With the following risks and trade-offs:
 
 ### 1. Cross-Domain Synonym Risk
 Using global synonyms (e.g., “tomato color”, “bulk pack”, “hp”) can introduce cross-category relevance drift, where unrelated domains (Food, Makeup, Industrial) influence each other.
@@ -194,7 +194,3 @@ This implementation uses a single-node Elasticsearch setup and query-time scorin
 **Mitigation:**
 - In production, evaluate shard sizing, caching strategies, and offline feature computation.
 - Move complex scoring logic to reranking layers if query latency becomes an issue.
-
----
-
-Overall, the design prioritizes explainability, correctness, and incremental improvement — aligning well with real-world Elasticsearch relevance workflows.
