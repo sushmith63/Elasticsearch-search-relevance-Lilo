@@ -14,3 +14,6 @@ This repository contains a local Elasticsearch setup and relevance experiments f
 3. Run `src/index_products.py` to index data
 4. Execute query examples in `/docs/queries`
 5. See relevance analysis in `/docs/report.md`
+
+Note: Orders data was reviewed and intentionally excluded from the core implementation; see report.md for details.
+

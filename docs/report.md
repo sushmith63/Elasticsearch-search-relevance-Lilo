@@ -194,3 +194,17 @@ This implementation uses a single-node Elasticsearch setup and query-time scorin
 **Mitigation:**
 - In production, evaluate shard sizing, caching strategies, and offline feature computation.
 - Move complex scoring logic to reranking layers if query latency becomes an issue.
+
+## Use of Orders Data
+
+The provided `orders.json` dataset represents behavioral and transactional signals such as product purchases.  
+For this exercise, I did not directly integrate orders data into the search ranking pipeline, as the core tasks focused on catalog-level relevance, index design, query behavior, and personalization logic.
+
+In a production system, orders data would be highly valuable for:
+- Deriving popularity and conversion-based ranking signals
+- Training learning-to-rank (LTR) models
+- Personalizing results based on historical purchasing behavior
+- Applying recency-weighted demand boosts
+
+However, integrating orders data meaningfully requires clear aggregation strategies (time windows, normalization across categories, sparsity handling), which were outside the scope of this assignment. For clarity and correctness, I scoped this implementation to text relevance and persona-based ranking while outlining orders-based ranking as a natural next step.
+
