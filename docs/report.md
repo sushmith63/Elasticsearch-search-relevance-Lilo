@@ -47,6 +47,11 @@ I relaxed the strict query by:
 
 This improved results substantially while still preventing obvious intent mismatch.
 
+### Data Quality Handling: Synonyms & Fuzzy Matching
+
+To improve robustness against noisy and inconsistent catalog data, synonyms are applied at **analysis time** using a custom Elasticsearch synonym filter (`lilo_synonyms`). This ensures common B2B term variations (e.g., hp ↔ horsepower, mm ↔ millimeter) are normalized consistently during both indexing and querying. In addition, fuzzy matching (`fuzziness: AUTO`) is enabled in multi-field keyword queries to tolerate typos, misspellings, and incomplete terms commonly found in user-entered search queries.
+
+
 **Observed results after Fix 1 v2:**
 - Q1 strict v2 total hits: **435**
 - Q2 strict v2 total hits: **195**
@@ -89,6 +94,11 @@ Signals:
 ### observation
 Due to noisy catalog data and cross-domain categories, purely “cheapest” scoring can surface irrelevant items (e.g., food categories with extremely low `price_per_unit`) unless persona scoring is applied within strong intent constraints (category filtering or learned intent classification).
 
+### Before vs After Persona-Based Ranking
+
+In the baseline search configuration, all users receive the same ranking driven primarily by textual relevance across product title, description, and attributes. After introducing persona-based boosting, ranking behavior changes by user context: a heavy enterprise buyer query boosts products with higher historical popularity and supplier reliability, while a budget-focused buyer query boosts products with lower `price_per_unit`. As a result, identical queries can return different top-ranked products aligned with each persona’s purchasing priorities.
+
+
 In a production system, I would:
 - detect intent first (category prediction / query classification),
 - then apply persona scoring only within that intent domain.
@@ -116,6 +126,10 @@ I would prioritize:
 
 5. **Learning-to-rank / vector reranking**
    - once click/purchase feedback exists, consider LTR or hybrid vector+BM25 reranking.
+
+6. **Unit normalization and deduplication**
+   - Normalize numeric attributes at ingestion time (e.g., converting kg/lb/oz to grams and mm/cm/in to millimeters) to enable consistent filtering, sorting, and scoring.
+   - Detect near-duplicate products using normalized titles, vendor identifiers, and attribute similarity, collapsing or merging duplicates to prevent result pollution and improve relevance.
 
 ---
 
