@@ -129,3 +129,72 @@ I would prioritize:
 - Persona queries:
   - `persona_heavy_buyer_v2.json`
   - `persona_budget_buyer_v2.json`
+
+## 8) Risks, Trade-offs, and Limitations
+
+This solution intentionally focuses on relevance reasoning rather than full production hardening. The following risks and trade-offs were identified:
+
+### 1. Cross-Domain Synonym Risk
+Using global synonyms (e.g., “tomato color”, “bulk pack”, “hp”) can introduce cross-category relevance drift, where unrelated domains (Food, Makeup, Industrial) influence each other.
+
+**Mitigation:**
+- Prefer category-scoped synonym sets in production.
+- Apply synonyms selectively to technical fields rather than free-text descriptions.
+
+---
+
+### 2. Over-Filtering Risk (False Negatives)
+Strict technical queries using `operator: and` and hard category exclusions initially resulted in zero hits due to noisy and incomplete text fields.
+
+**Mitigation:**
+- Use `minimum_should_match` instead of strict AND logic.
+- Apply exclusions as soft guardrails rather than absolute filters.
+
+---
+
+### 3. Intent Misclassification Risk
+Rule-based intent handling (e.g., boosting Food vs Makeup for “tomato”) may fail for ambiguous or long-tail queries.
+
+**Mitigation:**
+- Start with keyword-based intent rules.
+- Gradually introduce learned intent classifiers using click or purchase logs.
+
+---
+
+### 4. Persona Scoring Leakage
+Persona-based scoring (e.g., cheapest-wins for Budget Buyer) can surface irrelevant products if applied globally across all categories.
+
+**Mitigation:**
+- Apply persona scoring only after intent/category narrowing.
+- Combine persona scoring with minimum relevance thresholds.
+
+---
+
+### 5. Popularity Bias
+Boosting popularity can reinforce feedback loops where already popular products dominate results, reducing discovery.
+
+**Mitigation:**
+- Apply diminishing returns (e.g., sqrt or log scaling).
+- Balance popularity with freshness or diversity signals.
+
+---
+
+### 6. Data Quality Dependency
+Relevance quality is highly dependent on data cleanliness (category consistency, structured fields, unit normalization).
+
+**Mitigation:**
+- Normalize categories into canonical taxonomies.
+- Extract structured attributes (hp, diameter, units) into dedicated fields.
+
+---
+
+### 7. Scalability Considerations
+This implementation uses a single-node Elasticsearch setup and query-time scoring logic.
+
+**Mitigation:**
+- In production, evaluate shard sizing, caching strategies, and offline feature computation.
+- Move complex scoring logic to reranking layers if query latency becomes an issue.
+
+---
+
+Overall, the design prioritizes explainability, correctness, and incremental improvement — aligning well with real-world Elasticsearch relevance workflows.
